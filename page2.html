@@ -6,8 +6,11 @@ TogetherJSConfig_hubBase = "https://secure-harbor-02448.herokuapp.com";
 <script src="https://togetherjs.com/togetherjs-min.js"></script>
 </head>
 <body>
-PAGE 2
-<button onclick="window.location='index.html'">back to home</button>
+<form action="index.html" METHOD="POST">
+  <textarea name="message" rows="10" cols="30">The cat was playing in the garden.</textarea>
+<button >OK</button>
+  </form>
+
 <div id="content" />
 </body>
 </html>
