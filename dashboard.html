@@ -9,9 +9,9 @@
     });
 </script>
 <style>
-.chat {position: absolute;    bottom: 0;}
-.conversation-panel { height:8em; overflow-y: auto;   }
-.container {position:relative; height:100%}
+.conversation-panel {height:80%; overflow-y: auto;}
+.chat {height: 120px;position:relative; height:100%}
+.inputchat {position: absolute;    bottom: 0;height:20%}
 iframe {display: block; width: 100%; height: 100%; border: none;}
 </style>
 
@@ -24,37 +24,38 @@ iframe {display: block; width: 100%; height: 100%; border: none;}
 <body>
 
 <div id="left" class="ui-layout-west">
-<div id="container" class="container">
-	<div id="media" class="media"></div>
 
-	<div id="chat" class="chat">
+ <div id="chat" class="chat">
         <div id="conversation-panel" class="conversation-panel"></div>
         <div id="key-press" style="text-align: right; display: none; font-size: 11px;">
             <span style="vertical-align: middle;"></span>
             <img src="https://www.webrtc-experiment.com/images/key-press.gif" style="height: 12px; vertical-align: middle;">
         </div>
-        <textarea id="txt-chat-message"  ></textarea>
-		<button class="btn btn-primary" id="btn-chat-message" >Send</button>
+		<div class="inputchat">
+			<textarea id="txt-chat-message"  ></textarea>
+			<button class="btn btn-primary" id="btn-chat-message" >Send</button>
+			
 		
-	
-		<button class="btn btn-primary" id="btn-share-screen" >Share</button>
-		<button class="btn btn-primary" id="btn-camera-screen" style='display:none' >Camera</button>
+			<button class="btn btn-primary" id="btn-share-screen" >Share</button>
+			<button class="btn btn-primary" id="btn-camera-screen" style='display:none' >Camera</button>
+			</div>
 
 			
     </div>
-	</div>
 
 
 </div>
 
 <div class="ui-layout-center">
-  <iframe id="iframe" src="https://virtualstore.dior.com/champs-elysees/#/fr-fr/"></iframe>
+	<div id="media" class="media"></div>
+
 </div>
 </body>
 
 <script>
 var connection = new RTCMultiConnection();
 var oldStream = null;
+
 
 var screen_constraints = {
   video: {
@@ -83,7 +84,6 @@ connection.onmessage = appendChatMessage;
 oldOnstream = connection.onstream;
 
 connection.onstream = function(event) {
-
     if (event.stream.isScreen && !event.stream.canvasStream) {
 	document.querySelectorAll("video")[document.querySelectorAll("video").length-1].srcObject = event.stream;
 
@@ -99,10 +99,10 @@ connection.onstream = function(event) {
         video.srcObject = event.stream;
        console.log(" $('#main-video').show();");
     } else {
-	  event.mediaElement.controls = true;
       oldOnstream(event);
     }
-	document.querySelector("video").style.width='100%';
+		document.querySelector("video").style.width='48%';
+		document.querySelector("video").style.margin='1%';
 
 
 }
@@ -169,9 +169,8 @@ document.getElementById('btn-share-screen').onclick = function() {
     if(navigator.mediaDevices.getDisplayMedia) {
         navigator.mediaDevices.getDisplayMedia(screen_constraints).then(stream => {
             replaceScreenTrack(stream);
-			$('#btn-share-screen').hide();
+						$('#btn-share-screen').hide();
 			$('#btn-camera-screen').show();
-
         }, error => {
             alert('Please make sure to use Edge 17 or higher.');
         });
@@ -179,9 +178,8 @@ document.getElementById('btn-share-screen').onclick = function() {
     else if(navigator.getDisplayMedia) {
         navigator.getDisplayMedia(screen_constraints).then(stream => {
             replaceScreenTrack(stream);
-			$('#btn-share-screen').hide();
+						$('#btn-share-screen').hide();
 			$('#btn-camera-screen').show();
-
         }, error => {
             alert('Please make sure to use Edge 17 or higher.');
         });
@@ -251,6 +249,15 @@ function replaceScreenTrack(stream) {
     connection.send({
         showMainVideo: true
     });
+
+    // $('#main-video').show();
+   /* $('#screen-viewer').css({
+            top: $('#widget-container').offset().top,
+            left: $('#widget-container').offset().left,
+            width: $('#widget-container').width(),
+            height: $('#widget-container').height()
+        });
+    $('#screen-viewer').show();*/
 }
 
 function replaceTrack(videoTrack, screenTrackId) {
