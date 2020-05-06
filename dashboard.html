@@ -100,12 +100,27 @@ document.getElementById('join-room').onclick = function() {
 
 
 var connection = new RTCMultiConnection();
+
+
+connection.iceServers = [];
+
+// second step, set STUN url
+connection.iceServers.push({
+    urls: 'stun:numb.viagenie.ca'
+});
+
+// last step, set TURN url (recommended)
+connection.iceServers.push({
+    urls: 'turn:numb.viagenie.ca',
+    credential: 'ZXigVgkNpvmB',
+    username: 'lcavallo@gmail.com'
+});
 var oldStream = null;
 
 connection.candidates = {
     turn: true,
     stun: true,
-    host: false
+    host: true
 };
 
 var screen_constraints = {

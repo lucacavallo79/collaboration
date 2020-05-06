@@ -54,10 +54,23 @@ iframe {display: block; width: 100%; height: 100%; border: none;}
 
 <script>
 var connection = new RTCMultiConnection();
+connection.iceServers = [];
+
+// second step, set STUN url
+connection.iceServers.push({
+    urls: 'stun:numb.viagenie.ca'
+});
+
+// last step, set TURN url (recommended)
+connection.iceServers.push({
+    urls: 'turn:numb.viagenie.ca',
+    credential: 'ZXigVgkNpvmB',
+    username: 'lcavallo@gmail.com'
+});
 connection.candidates = {
     turn: true,
     stun: true,
-    host: false
+    host: true
 };
 var oldStream = null;
 
