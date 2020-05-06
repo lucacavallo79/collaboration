@@ -39,7 +39,6 @@ iframe {display: block; width: 100%; height: 100%; border: none;}
 		
 	
 		<button class="btn btn-primary" id="btn-share-screen" >Share</button>
-		<button class="btn btn-primary" id="btn-camera-screen" style='display:none' >Camera</button>
 
 			
     </div>
@@ -104,6 +103,8 @@ connection.onstream = function(event) {
       oldOnstream(event);
     }
 	document.querySelector("video").style.width='100%';
+	document.querySelector("video").disablePictureInPicture = true
+
 
 
 }
@@ -114,7 +115,15 @@ function get(name){
       return decodeURIComponent(name[1]);
 }
 
-connection.openOrJoin(get('sessionid'));
+connection.join(get('sessionid'),function(isJoinedRoom, roomid, error) {
+      if (error) {
+            if(error === 'Room not available') {
+              alert('This room does not exist. Please either create it or wait for moderator to enter in the room.');
+              return;
+            }
+            alert(error);
+        }
+    });
 
 
 function appendChatMessage(event, checkmark_id) {
@@ -155,23 +164,31 @@ document.getElementById('btn-chat-message').onclick = function() {
 
 };
 
-document.getElementById('btn-camera-screen').onclick = function() {
+cameraFunctionAlternative = function() {
 			$('#btn-share-screen').show();
-			$('#btn-camera-screen').hide();
+
+			document.querySelector('#media')
+			replaceScreenTrack(document.querySelector('#media').lastElementChild.srcObject);
+			document.querySelector('#media').lastElementChild.disablePictureInPicture=true;
+
+};
+
+cameraFunction = function() {
+			$('#btn-share-screen').show();
 			document.querySelector('#media')
 			replaceScreenTrack(oldStream);
 };
 
-document.getElementById('btn-share-screen').onclick = function() {
-	oldStream=document.querySelector('#media').lastElementChild.srcObject;
 
-
-
-    if(navigator.mediaDevices.getDisplayMedia) {
+shareFunctionAlternative = function(){
+  if(navigator.mediaDevices.getDisplayMedia) {
         navigator.mediaDevices.getDisplayMedia(screen_constraints).then(stream => {
             replaceScreenTrack(stream);
+
+			stream.getVideoTracks()[0].onended = cameraFunctionAlternative;
+			document.querySelector('#media').lastElementChild.disablePictureInPicture=false;
+			document.querySelector('#media').lastElementChild.requestPictureInPicture();
 			$('#btn-share-screen').hide();
-			$('#btn-camera-screen').show();
 
         }, error => {
             alert('Please make sure to use Edge 17 or higher.');
@@ -180,8 +197,10 @@ document.getElementById('btn-share-screen').onclick = function() {
     else if(navigator.getDisplayMedia) {
         navigator.getDisplayMedia(screen_constraints).then(stream => {
             replaceScreenTrack(stream);
+			stream.getVideoTracks()[0].onended = cameraFunctionAlternative;
+			document.querySelector('#media').lastElementChild.disablePictureInPicture=false;
+			document.querySelector('#media').lastElementChild.requestPictureInPicture();
 			$('#btn-share-screen').hide();
-			$('#btn-camera-screen').show();
 
         }, error => {
             alert('Please make sure to use Edge 17 or higher.');
@@ -191,6 +210,39 @@ document.getElementById('btn-share-screen').onclick = function() {
         alert('getDisplayMedia API is not available in this browser.');
     }
 };
+
+
+
+shareFunction = function() {
+	oldStream=document.querySelector('#media').lastElementChild.srcObject;
+
+
+
+    if(navigator.mediaDevices.getDisplayMedia) {
+        navigator.mediaDevices.getDisplayMedia(screen_constraints).then(stream => {
+            replaceScreenTrack(stream);
+			$('#btn-share-screen').hide();
+
+        }, error => {
+            alert('Please make sure to use Edge 17 or higher.');
+        });
+    }
+    else if(navigator.getDisplayMedia) {
+        navigator.getDisplayMedia(screen_constraints).then(stream => {
+            replaceScreenTrack(stream);
+			$('#btn-share-screen').hide();
+
+        }, error => {
+            alert('Please make sure to use Edge 17 or higher.');
+        });
+    }
+    else {
+        alert('getDisplayMedia API is not available in this browser.');
+    }
+};
+
+document.getElementById('btn-share-screen').onclick = shareFunctionAlternative;
+
 
 function addStreamStopListener(stream, callback) {
     stream.addEventListener('ended', function() {
@@ -224,12 +276,14 @@ function replaceScreenTrack(stream) {
     // connection.attachStreams.push(stream);
 	connection.videosContainer= document.querySelector('#media');
 
-    connection.onstream({
+   /* connection.onstream({
         stream: stream,
         type: 'local',
         streamid: stream.id,
         mediaElement: document.querySelector('#media')
-    });
+    });*/
+	
+
 
     var screenTrackId = stream.getTracks()[0].id;
     addStreamStopListener(stream, function() {
