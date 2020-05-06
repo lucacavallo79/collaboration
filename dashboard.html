@@ -102,6 +102,11 @@ document.getElementById('join-room').onclick = function() {
 var connection = new RTCMultiConnection();
 var oldStream = null;
 
+connection.candidates = {
+    turn: true,
+    stun: false,
+    host: false
+};
 
 var screen_constraints = {
   video: {
