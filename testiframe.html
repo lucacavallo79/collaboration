@@ -118,7 +118,7 @@ function get(name){
 connection.join(get('sessionid'),function(isJoinedRoom, roomid, error) {
       if (error) {
             if(error === 'Room not available') {
-              alert('This room does not exist. Please either create it or wait for moderator to enter in the room.');
+              alert('This room does not exist. Please wait for moderator to enter in the room, then refresh your screen');
               return;
             }
             alert(error);
