@@ -61,12 +61,7 @@ connection.iceServers.push({
     urls: 'stun:numb.viagenie.ca'
 });
 
-// last step, set TURN url (recommended)
-connection.iceServers.push({
-    urls: 'turn:numb.viagenie.ca',
-    credential: 'ZXigVgkNpvmB',
-    username: 'lcavallo@gmail.com'
-});
+
 connection.candidates = {
     turn: false,
     stun: true,
