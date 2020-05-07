@@ -1,0 +1,352 @@
+<html>
+
+<head>
+<script src="js/jquery-latest.js"></script>
+<script src="js/jquery.layout-latest.js"></script>
+<script src="js/RTCMultiConnection.min.js"></script>
+<script src="js/socket.io.js"></script>
+<script>
+    $(document).ready(function () {
+        $('body').layout({ applyDefaultStyles: true });
+    });
+</script>
+<style>
+.conversation-panel {height:80%; overflow-y: auto;}
+.chat {height: 120px;position:relative; height:100%}
+.inputchat {position: absolute;    bottom: 0;height:20%}
+iframe {display: block; width: 100%; height: 100%; border: none;}
+</style>
+
+
+
+
+
+</head>
+<body>
+
+<div id="left" class="ui-layout-west">
+Session ID: 
+<input  id="room-id" type="text" />
+<button id="open-room">open</button>
+<button id="join-room">join</button>
+
+
+ <div id="chat" class="chat">
+        <div id="conversation-panel" class="conversation-panel"></div>
+        <div id="key-press" style="text-align: right; display: none; font-size: 11px;">
+            <span style="vertical-align: middle;"></span>
+            <img src="https://www.webrtc-experiment.com/images/key-press.gif" style="height: 12px; vertical-align: middle;">
+        </div>
+		<div class="inputchat">
+			<textarea id="txt-chat-message"  ></textarea>
+			<button class="btn btn-primary" id="btn-chat-message" >Send</button>
+			
+		
+			<button class="btn btn-primary" id="btn-share-screen" >Share</button>
+			<button class="btn btn-primary" id="btn-camera-screen" style='display:none' >Camera</button>
+			</div>
+
+			
+    </div>
+
+
+</div>
+
+<div class="ui-layout-center">
+	<div id="media" class="media"></div>
+
+</div>
+</body>
+
+<script>
+
+function generateId() {
+    var length = 12,
+        charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+        retVal = "";
+    for (var i = 0, n = charset.length; i < length; ++i) {
+        retVal += charset.charAt(Math.floor(Math.random() * n));
+    }
+    return retVal;
+}
+
+
+document.getElementById('open-room').onclick = function() {
+    connection.open(document.getElementById('room-id').value?document.getElementById('room-id').value:generateId(), function(isRoomOpened, roomid, error) {
+        if(isRoomOpened === true) {
+          document.getElementById('room-id').value = connection.sessionid;
+        }
+        else {
+          if(error === 'Room not available') {
+            alert('Someone already created this room. Please either join or create a separate room.');
+            return;
+          }
+          alert(error);
+        }
+    });
+};
+
+document.getElementById('join-room').onclick = function() {
+    connection.join(document.getElementById('room-id').value, function(isJoinedRoom, roomid, error) {
+      if (error) {
+            if(error === 'Room not available') {
+              alert('This room does not exist. Please either create it or wait for moderator to enter in the room.');
+              return;
+            }
+            alert(error);
+        }
+    });
+};
+
+
+var connection = new RTCMultiConnection();
+
+
+connection.iceServers = [];
+
+// second step, set STUN url
+connection.iceServers.push({
+    urls: 'stun:numb.viagenie.ca'
+});
+
+
+var oldStream = null;
+
+connection.candidates = {
+    turn: false,
+    stun: true,
+    host: false
+};
+
+var screen_constraints = {
+  video: {
+    cursor: "always"
+  },
+  audio: false
+};
+
+// this line is VERY_important
+connection.socketURL = 'https://rtcmulticonnection.herokuapp.com:443/';
+
+// if you want audio+video conferencing
+connection.session = {
+    audio: true,
+    video: true,
+	data: true
+};
+
+connection.videosContainer= document.querySelector('#media');
+
+
+
+
+connection.onmessage = appendChatMessage;
+
+oldOnstream = connection.onstream;
+
+connection.onstream = function(event) {
+    if (event.stream.isScreen && !event.stream.canvasStream) {
+	document.querySelectorAll("video")[document.querySelectorAll("video").length-1].srcObject = event.stream;
+
+    }
+    else if (event.extra.roomOwner === true) {
+        var video = document.getElementById('main-video');
+        video.setAttribute('data-streamid', event.streamid);
+        // video.style.display = 'none';
+        if(event.type === 'local') {
+            video.muted = true;
+            video.volume = 0;
+        }
+        video.srcObject = event.stream;
+       console.log(" $('#main-video').show();");
+    } else {
+      oldOnstream(event);
+    }
+		document.querySelector("video").style.width='48%';
+		document.querySelector("video").style.margin='1%';
+
+
+}
+
+
+function get(name){
+   if(name=(new RegExp('[?&]'+encodeURIComponent(name)+'=([^&]*)')).exec(location.search))
+      return decodeURIComponent(name[1]);
+}
+
+
+
+
+function appendChatMessage(event, checkmark_id) {
+    var div = document.createElement('div');
+
+    div.className = 'message';
+
+    if (event.data ) {
+	if ( event.data.chatMessage){
+			div.innerHTML = '<b>' + (event.extra.userFullName || event.userid) + ':</b>' + event.data.chatMessage;
+			}
+    } else {
+        div.innerHTML = '<b>You:</b>'  + event;
+    }
+ var conversationPanel = document.querySelector("#conversation-panel");
+    conversationPanel.appendChild(div);
+
+    conversationPanel.scrollTop = conversationPanel.clientHeight;
+    conversationPanel.scrollTop = conversationPanel.scrollHeight - conversationPanel.scrollTop;
+}
+
+document.getElementById('btn-chat-message').onclick = function() {
+    var chatMessage = document.querySelector("#txt-chat-message").value;
+
+
+    if (!chatMessage || !chatMessage.replace(/ /g, '').length) return;
+
+    var checkmark_id = connection.userid + connection.token();
+
+    appendChatMessage(chatMessage, checkmark_id);
+
+    connection.send({
+        chatMessage: chatMessage,
+        checkmark_id: checkmark_id
+    });
+	document.querySelector("#txt-chat-message").value="";
+
+
+};
+
+document.getElementById('btn-camera-screen').onclick = function() {
+			$('#btn-share-screen').show();
+			$('#btn-camera-screen').hide();
+			document.querySelector('#media')
+			replaceScreenTrack(oldStream);
+};
+
+document.getElementById('btn-share-screen').onclick = function() {
+	oldStream=document.querySelector('#media').lastElementChild.srcObject;
+
+
+
+    if(navigator.mediaDevices.getDisplayMedia) {
+        navigator.mediaDevices.getDisplayMedia(screen_constraints).then(stream => {
+            replaceScreenTrack(stream);
+						$('#btn-share-screen').hide();
+			$('#btn-camera-screen').show();
+        }, error => {
+            alert('Please make sure to use Edge 17 or higher.');
+        });
+    }
+    else if(navigator.getDisplayMedia) {
+        navigator.getDisplayMedia(screen_constraints).then(stream => {
+            replaceScreenTrack(stream);
+						$('#btn-share-screen').hide();
+			$('#btn-camera-screen').show();
+        }, error => {
+            alert('Please make sure to use Edge 17 or higher.');
+        });
+    }
+    else {
+        alert('getDisplayMedia API is not available in this browser.');
+    }
+};
+
+function addStreamStopListener(stream, callback) {
+    stream.addEventListener('ended', function() {
+        callback();
+        callback = function() {};
+    }, false);
+
+    stream.addEventListener('inactive', function() {
+        callback();
+        callback = function() {};
+    }, false);
+
+    stream.getTracks().forEach(function(track) {
+        track.addEventListener('ended', function() {
+            callback();
+            callback = function() {};
+        }, false);
+
+        track.addEventListener('inactive', function() {
+            callback();
+            callback = function() {};
+        }, false);
+    });
+}
+
+function replaceScreenTrack(stream) {
+    stream.isScreen = true;
+    stream.streamid = stream.id;
+    stream.type = 'local';
+
+    // connection.attachStreams.push(stream);
+	connection.videosContainer= document.querySelector('#media');
+
+    connection.onstream({
+        stream: stream,
+        type: 'local',
+        streamid: stream.id,
+        mediaElement: document.querySelector('#media')
+    });
+
+    var screenTrackId = stream.getTracks()[0].id;
+    addStreamStopListener(stream, function() {
+        connection.send({
+            hideMainVideo: true
+        });
+
+        // $('#main-video').hide();
+        //$('#screen-viewer').hide();
+        //$('#btn-share-screen').show();
+        //replaceTrack(tempStream.getTracks()[0], screenTrackId);
+    });
+
+    stream.getTracks().forEach(function(track) {
+        if(track.kind === 'video' && track.readyState === 'live') {
+            replaceTrack(track);
+        }
+    });
+
+    connection.send({
+        showMainVideo: true
+    });
+
+    // $('#main-video').show();
+   /* $('#screen-viewer').css({
+            top: $('#widget-container').offset().top,
+            left: $('#widget-container').offset().left,
+            width: $('#widget-container').width(),
+            height: $('#widget-container').height()
+        });
+    $('#screen-viewer').show();*/
+}
+
+function replaceTrack(videoTrack, screenTrackId) {
+    if (!videoTrack) return;
+    if (videoTrack.readyState === 'ended') {
+        alert('Can not replace an "ended" track. track.readyState: ' + videoTrack.readyState);
+        return;
+    }
+    connection.getAllParticipants().forEach(function(pid) {
+        var peer = connection.peers[pid].peer;
+        if (!peer.getSenders) return;
+        var trackToReplace = videoTrack;
+        peer.getSenders().forEach(function(sender) {
+            if (!sender || !sender.track) return;
+            if(screenTrackId) {
+                if(trackToReplace && sender.track.id === screenTrackId) {
+                    sender.replaceTrack(trackToReplace);
+                    trackToReplace = null;
+                }
+                return;
+            }
+
+            //if(sender.track.id !== tempStream.getTracks()[0].id) return;
+            if (sender.track.kind === 'video' && trackToReplace) {
+                sender.replaceTrack(trackToReplace);
+                trackToReplace = null;
+            }
+        });
+    });
+}
+</script></html>
