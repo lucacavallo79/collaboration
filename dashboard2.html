@@ -102,26 +102,44 @@ document.getElementById('join-room').onclick = function() {
 var connection = new RTCMultiConnection();
 
 
+var turnEnabled=get('turnEnabled', false);
+var stunEnabled=get('stunEnabled', false);
+var hostEnabled=get('hostEnabled', true);
+
+
+connection.candidates = {
+    turn: turnEnabled,
+    stun: stunEnabled,
+    host: hostEnabled
+};
+
+
+
+if (stunEnabled || turnEnabled){
+
 connection.iceServers = [];
 
+if (stunEnabled ){
 // second step, set STUN url
+	connection.iceServers.push({
+		urls: 'stun:numb.viagenie.ca'
+	});
+}
+
+if ( turnEnabled){
+
 connection.iceServers.push({
-    urls: 'stun:numb.viagenie.ca'
+    urls: 'turn:numb.viagenie.ca',
+    credential: 'ZXigVgkNpvmB',
+    username: 'lcavallo@gmail.com'
 });
 
-
+}
+}
 var oldStream = null;
 
 
-var turnEnbled=get('turnEnbled', false);
-var stunEnbled=get('stunEnabled', true);
-var hostEnabled=get('hostEnabled', false);
 
-connection.candidates = {
-    turn: turnEnbled,
-    stun: stunEnbled,
-    host: hostEnabled
-};
 
 var screen_constraints = {
   video: {
@@ -166,6 +184,11 @@ connection.onstream = function(event) {
        console.log(" $('#main-video').show();");
     } else {
       oldOnstream(event);
+	  var checkmark_id = connection.userid + connection.token();
+	  connection.send({
+      chatMessage: '#systemmessage#',
+      checkmark_id: checkmark_id
+    });
     }
 		document.querySelector("video").style.width='48%';
 		document.querySelector("video").style.margin='1%';
@@ -189,10 +212,15 @@ function appendChatMessage(event, checkmark_id) {
 
     if (event.data ) {
 	if ( event.data.chatMessage){
+	if  (event.data.chatMessage!= '#systemmessage#'){
 			div.innerHTML = '<b>' + (event.extra.userFullName || event.userid) + ':</b>' + event.data.chatMessage;
 			}
+			}
     } else {
+		if  (event!= '#systemmessage#'){
+
         div.innerHTML = '<b>You:</b>'  + event;
+		}
     }
  var conversationPanel = document.querySelector("#conversation-panel");
     conversationPanel.appendChild(div);

@@ -55,13 +55,34 @@ iframe {display: block; width: 100%; height: 100%; border: none;}
 
 <script>
 var connection = new RTCMultiConnection();
+
+
+
+var turnEnabled=get('turnEnabled', false);
+var stunEnabled=get('stunEnabled', false);
+var hostEnabled=get('hostEnabled', true);
+
+
+connection.candidates = {
+    turn: turnEnabled,
+    stun: stunEnabled,
+    host: hostEnabled
+};
+
+
+
+if (stunEnabled || turnEnabled){
+
 connection.iceServers = [];
 
-
+if (stunEnabled ){
 // second step, set STUN url
-connection.iceServers.push({
-    urls: 'stun:numb.viagenie.ca'
-});
+	connection.iceServers.push({
+		urls: 'stun:numb.viagenie.ca'
+	});
+}
+
+if ( turnEnabled){
 
 connection.iceServers.push({
     urls: 'turn:numb.viagenie.ca',
@@ -69,16 +90,9 @@ connection.iceServers.push({
     username: 'lcavallo@gmail.com'
 });
 
-var turnEnbled=get('turnEnbled', false);
-var stunEnbled=get('stunEnabled', true);
-var hostEnabled=get('hostEnabled', true);
+}
+}
 
-
-connection.candidates = {
-    turn: turnEnbled,
-    stun: stunEnbled,
-    host: hostEnabled
-};
 var oldStream = null;
 
 var screen_constraints = {
@@ -126,6 +140,11 @@ connection.onstream = function(event) {
     } else {
 	  event.mediaElement.controls = true;
       oldOnstream(event);
+	  	  var checkmark_id = connection.userid + connection.token();
+	  connection.send({
+      chatMessage: '#systemmessage#',
+      checkmark_id: checkmark_id
+    });
     }
 	document.querySelector("video").style.width='100%';
 	document.querySelector("video").disablePictureInPicture = true
@@ -160,10 +179,15 @@ function appendChatMessage(event, checkmark_id) {
 
     if (event.data ) {
 	if ( event.data.chatMessage){
+	if  (event.data.chatMessage!= '#systemmessage#'){
 			div.innerHTML = '<b>' + (event.extra.userFullName || event.userid) + ':</b>' + event.data.chatMessage;
 			}
+			}
     } else {
+		if  (event!= '#systemmessage#'){
+
         div.innerHTML = '<b>You:</b>'  + event;
+		}
     }
  var conversationPanel = document.querySelector("#conversation-panel");
     conversationPanel.appendChild(div);
