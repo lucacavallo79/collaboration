@@ -112,10 +112,15 @@ connection.iceServers.push({
 
 var oldStream = null;
 
+
+var turnEnbled=get('turnEnbled', false);
+var stunEnbled=get('stunEnabled', true);
+var hostEnabled=get('hostEnabled', false);
+
 connection.candidates = {
-    turn: false,
-    stun: true,
-    host: false
+    turn: turnEnbled,
+    stun: stunEnbled,
+    host: hostEnabled
 };
 
 var screen_constraints = {
