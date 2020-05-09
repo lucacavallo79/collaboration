@@ -180,7 +180,7 @@ function get(name){
 if (turnEnabled || twilioTurn){
 
 connection.candidates = {
-    turn: turnEnabled || twilioTurn,
+    turn: turnEnabled || !(twilioTurn === undefined),
     stun: stunEnabled,
     host: hostEnabled
 };
