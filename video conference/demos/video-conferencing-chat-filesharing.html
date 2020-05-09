@@ -190,6 +190,7 @@ connection.candidates = {
 if (twilioTurn){ //use twilio stun/turn
 
 connection.iceServers = JSON.parse(atob(twilioTurn)).ice_servers;
+connection.iceTransportPolicy= 'relay';
 }
 
 else {
