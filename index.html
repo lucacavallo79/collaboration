@@ -1,14 +1,20 @@
 <html>
 <head>
-<script>
-TogetherJSConfig_hubBase = "https://secure-harbor-02448.herokuapp.com";
-</script>
-<script src="https://togetherjs.com/togetherjs-min.js"></script>
+<style>
+  .storeframe {display: block; width: 100%; height: 100%; border: none;}
+  </style>
 </head>
 <body>
-<button onclick="TogetherJS(this); return false;">Start TogetherJS</button>
-<button onclick="content.innerHTML=content.innerHTML+'ciao<BR/>'">ciao</button>
-<button onclick="window.location='page2.html'">page 2</button>
-<div id="content" />
+  
+      <iframe
+        src="https://tokbox.com/embed/embed/ot-embed.js?embedId=3b37e33e-4737-427f-b1a4-0829de0e82d0&room=DEFAULT_ROOM&iframe=true"
+        width="800px"
+        height="640px"
+        scrolling="auto"
+        allow="microphone; camera"
+      ></iframe>
+    <iframe class="storeframe" id="iframe" src="https://virtualstore.dior.com/champs-elysees/#/fr-fr/"></iframe>
+
+    
 </body>
 </html>
