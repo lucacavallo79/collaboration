@@ -172,6 +172,31 @@ var twilioTurn = get('twilioTurn',false);
 
 
 /* START CUSTOM LUCA */
+
+
+var width = 320;
+var height = 240;
+
+var supports = navigator.mediaDevices.getSupportedConstraints();
+
+if (supports.width && supports.height) {
+    connection.mediaConstraints = {
+    audio: true,
+    video: {
+        mandatory: {
+            minWidth: 320,
+            maxWidth: 640,
+            minHeight: 240,
+            maxHeight: 480
+        },
+        optional: []
+    }
+};
+;
+}
+
+
+
 function get(name){
    if(name=(new RegExp('[?&]'+encodeURIComponent(name)+'=([^&]*)')).exec(location.search))
       return decodeURIComponent(name[1]);
@@ -190,7 +215,6 @@ connection.candidates = {
 if (twilioTurn){ //use twilio stun/turn
 
 connection.iceServers = JSON.parse(atob(twilioTurn)).ice_servers;
-connection.iceTransportPolicy= 'relay';
 }
 
 else {
