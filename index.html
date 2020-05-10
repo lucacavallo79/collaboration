@@ -1,11 +1,27 @@
 <html>
 <head>
+  
+      <link href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/themes/smoothness/jquery-ui.css" rel="stylesheet" type="text/css"/>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
 <style>
-  .storeframe {display: block; width: 100%; height: 100%; border: none;}
-  </style>
+  iframe {display: block; width: 100%; height: 100%; border: none;}
+  
+          #divResize { 
+            border:dashed 1px #CCC; 
+            width:120px; 
+            height:120px; 
+            padding:5px; 
+            margin:5px; 
+            font:13px Arial; 
+            cursor:move; 
+            float:left 
+        } 
+    </style>
+  
 </head>
 <body>
-  
+  <div id="divResize">
       <iframe
         src="https://tokbox.com/embed/embed/ot-embed.js?embedId=3b37e33e-4737-427f-b1a4-0829de0e82d0&room=DEFAULT_ROOM&iframe=true"
         width="800px"
@@ -13,8 +29,15 @@
         scrolling="auto"
         allow="microphone; camera"
       ></iframe>
+  </div>
     <iframe class="storeframe" id="iframe" src="https://virtualstore.dior.com/champs-elysees/#/fr-fr/"></iframe>
 
     
 </body>
+  
+  <script>
+ $(document).ready(function() {
+    $(function() { $("#divResize").draggable().resizable(); });
+ }
+  </script>
 </html>
