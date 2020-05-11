@@ -43,14 +43,15 @@
       </style>
    </head>
    <body>
-	<!--div id="room-urls" style="text-align: center;display: none;background: #F1EDED;margin: 15px -10px;border: 1px solid rgb(189, 189, 189);border-left: 0;border-right: 0;z-index:-999"></div-->
+	<div id="room-urls" style="text-align: center;display: none;background: #F1EDED;margin: 15px -10px;border: 1px solid rgb(189, 189, 189);border-left: 0;border-right: 0;z-index:-999"><h1></h1></div>
 
       <div id="chat-container" class="floating chat-container">
          <div class="divheader">Click here to move</div>
          <div id="file-container"></div>
          <div class="chat-output"></div>
          <input type="text" id="input-text-chat" placeholder="Enter Text Chat" disabled>
-         <button id="share-file" disabled>Share File</button>
+	     <button id="share-screen" disabled>Share Screen</button>
+		 <!--button id="share-file" disabled>Share File</button-->
       </div>
       <div class="floating controls">
          <div class="divheader">Click here to move</div>
@@ -68,6 +69,7 @@
          <iframe class="storeframe" id="iframe" src="https://virtualstore.dior.com/champs-elysees/#/fr-fr/"></iframe>
       </div>
       <script src="../dist/RTCMultiConnection.min.js"></script>
+	  <script src="https://www.webrtc-experiment.com/MultiStreamsMixer.js"></script>
       <script src="../node_modules/webrtc-adapter/out/adapter.js"></script>
       <script src="../socket.io/socket.io.js"></script>
       <!-- custom layout for HTML5 audio/video elements -->
@@ -115,17 +117,252 @@
              }
          };
          
+		 
+		 //SHARE SCREEEN CODE:
+		 
+		 function replaceScreenTrack(stream) {
+    stream.isScreen = true;
+    stream.streamid = stream.id;
+    stream.type = 'local';
+
+    // connection.attachStreams.push(stream);
+	connection.videosContainer= document.querySelector('#media');
+
+   /* connection.onstream({
+        stream: stream,
+        type: 'local',
+        streamid: stream.id,
+        mediaElement: document.querySelector('#media')
+    });*/
+	
+
+
+    var screenTrackId = stream.getTracks()[0].id;
+    addStreamStopListener(stream, function() {
+        connection.send({
+            hideMainVideo: true
+        });
+
+        // $('#main-video').hide();
+        //$('#screen-viewer').hide();
+        //$('#btn-share-screen').show();
+        //replaceTrack(tempStream.getTracks()[0], screenTrackId);
+    });
+
+    stream.getTracks().forEach(function(track) {
+        if(track.kind === 'video' && track.readyState === 'live') {
+            replaceTrack(track);
+        }
+    });
+
+    connection.send({
+        showMainVideo: true
+    });
+}
+
+		 
+		 function replaceTrack(videoTrack, screenTrackId) {
+    if (!videoTrack) return;
+    if (videoTrack.readyState === 'ended') {
+        alert('Can not replace an "ended" track. track.readyState: ' + videoTrack.readyState);
+        return;
+    }
+    connection.getAllParticipants().forEach(function(pid) {
+        var peer = connection.peers[pid].peer;
+        if (!peer.getSenders) return;
+        var trackToReplace = videoTrack;
+        peer.getSenders().forEach(function(sender) {
+            if (!sender || !sender.track) return;
+            if(screenTrackId) {
+                if(trackToReplace && sender.track.id === screenTrackId) {
+                    sender.replaceTrack(trackToReplace);
+                    trackToReplace = null;
+                }
+                return;
+            }
+
+            //if(sender.track.id !== tempStream.getTracks()[0].id) return;
+            if (sender.track.kind === 'video' && trackToReplace) {
+                sender.replaceTrack(trackToReplace);
+                trackToReplace = null;
+            }
+        });
+    });
+}
+		 
+		     function addStreamStopListener(stream, callback) {
+                stream.addEventListener('ended', function() {
+                    callback();
+                    callback = function() {};
+                }, false);
+                stream.addEventListener('inactive', function() {
+                    callback();
+                    callback = function() {};
+                }, false);
+                stream.getTracks().forEach(function(track) {
+                    track.addEventListener('ended', function() {
+                        callback();
+                        callback = function() {};
+                    }, false);
+                    track.addEventListener('inactive', function() {
+                        callback();
+                        callback = function() {};
+                    }, false);
+                });
+            }
+		
+		   function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
+                if (typeof stroke == 'undefined') {
+                    stroke = true;
+                }
+                if (typeof radius === 'undefined') {
+                    radius = 5;
+                }
+                if (typeof radius === 'number') {
+                    radius = {
+                        tl: radius,
+                        tr: radius,
+                        br: radius,
+                        bl: radius
+                    };
+                } else {
+                    var defaultRadius = {
+                        tl: 0,
+                        tr: 0,
+                        br: 0,
+                        bl: 0
+                    };
+                    for (var side in defaultRadius) {
+                        radius[side] = radius[side] || defaultRadius[side];
+                    }
+                }
+                ctx.beginPath();
+                ctx.moveTo(x + radius.tl, y);
+                ctx.lineTo(x + width - radius.tr, y);
+                ctx.quadraticCurveTo(x + width, y, x + width, y + radius.tr);
+                ctx.lineTo(x + width, y + height - radius.br);
+                ctx.quadraticCurveTo(x + width, y + height, x + width - radius.br, y + height);
+                ctx.lineTo(x + radius.bl, y + height);
+                ctx.quadraticCurveTo(x, y + height, x, y + height - radius.bl);
+                ctx.lineTo(x, y + radius.tl);
+                ctx.quadraticCurveTo(x, y, x + radius.tl, y);
+                ctx.closePath();
+                if (fill) {
+                    ctx.fill();
+                }
+                if (stroke) {
+                    ctx.stroke();
+                }
+            }
+		
+		    function fullCanvasRenderHandler(stream, textToDisplay) {
+                // on-video-render:
+                // called as soon as this video stream is drawn (painted or recorded) on canvas2d surface
+                stream.onRender = function(context, x, y, width, height, idx) {
+                    context.font = '50px Georgia';
+                    var measuredTextWidth = parseInt(context.measureText(textToDisplay).width);
+                    x = x + (parseInt((width - measuredTextWidth)) - 40);
+                    y = y + 80;
+                    context.strokeStyle = 'rgb(255, 0, 0)';
+                    context.fillStyle = 'rgba(255, 255, 0, .5)';
+                    roundRect(context, x - 20, y - 55, measuredTextWidth + 40, 75, 20, true);
+                };
+            }
+
+            function normalVideoRenderHandler(stream, textToDisplay, callback) {
+                // on-video-render:
+                // called as soon as this video stream is drawn (painted or recorded) on canvas2d surface
+                stream.onRender = function(context, x, y, width, height, idx, ignoreCB) {
+                    if(!ignoreCB && callback) {
+                        callback(context, x, y, width, height, idx, textToDisplay);
+                        return;
+                    }
+
+                    context.font = '40px Georgia';
+                    var measuredTextWidth = parseInt(context.measureText(textToDisplay).width);
+                    x = x + (parseInt((width - measuredTextWidth)) / 2);
+                    y = (context.canvas.height - height) + 50;
+                    context.strokeStyle = 'rgb(255, 0, 0)';
+                    context.fillStyle = 'rgba(255, 255, 0, .5)';
+                    roundRect(context, x - 20, y - 35, measuredTextWidth + 40, 45, 20, true);
+                };
+            }
+		
+		 function afterScreenCaptured(screenStream) {
+					document.getElementById('share-screen').disabled=true;
+					cameraStream= mainStream.clone();
+
+                    screenStream.fullcanvas = true;
+                    screenStream.width = connection.videosContainer.clientWidth; // or 3840
+                    screenStream.height = connection.videosContainer.clientHeight; // or 2160 
+
+                    cameraStream.width = parseInt((30 / 100) * screenStream.width);
+                    cameraStream.height = parseInt((30 / 100) * screenStream.height);
+                    cameraStream.top = screenStream.height - cameraStream.height;
+                    cameraStream.left = screenStream.width - cameraStream.width;
+
+                    mixer = new MultiStreamsMixer([screenStream, cameraStream]);
+
+                    mixer.frameInterval = 1;
+                    mixer.startDrawingFrames();
+					var mixedStream = mixer.getMixedStream();
+                    videoPreview.srcObject = mixedStream;
+					videoPreview.play();
+					replaceScreenTrack(mixedStream);
+
+
+                    addStreamStopListener(screenStream, function() {
+                        mixer.releaseStreams();
+						replaceScreenTrack(mainStream);
+						videoPreview.srcObject= mainStream;
+						videoPreview.play();
+						document.getElementById('share-screen').disabled=false;
+						
+                    });
+			}
+		 var myScreenStream=null;
+			function getMixedCameraAndScreen() {
+                if(navigator.getDisplayMedia) {
+                    navigator.getDisplayMedia({video: true}).then(screenStream => {
+					myScreenStream=screenStream;
+                        afterScreenCaptured(screenStream);
+                    });
+                }
+                else if(navigator.mediaDevices.getDisplayMedia) {
+                    navigator.mediaDevices.getDisplayMedia({video: true}).then(screenStream => {
+					myScreenStream=screenStream;
+                        afterScreenCaptured(screenStream);
+                    });
+                }
+                else {
+                    alert('getDisplayMedia API is not supported by this browser.');
+                }
+            }
+
+		 
+		 
+		 
+	
+
+		 
+		document.getElementById('share-screen').onclick = getMixedCameraAndScreen;
+
+		 
+		 
+		 
+		 
+		 
          // ......................................................
          // ................FileSharing/TextChat Code.............
          // ......................................................
          
-         document.getElementById('share-file').onclick = function() {
+     /*    document.getElementById('share-file').onclick = function() {
              var fileSelector = new FileSelector();
              fileSelector.selectSingleFile(function(file) {
                  connection.send(file);
              });
          };
-         
+         */
          document.getElementById('input-text-chat').onkeyup = function(e) {
              if (e.keyCode != 13) return;
          
@@ -200,27 +437,7 @@
          /* START CUSTOM LUCA */
          
          
-         var width = 320;
-         var height = 240;
-         
-         var supports = navigator.mediaDevices.getSupportedConstraints();
-         
-         if (supports.width && supports.height) {
-             connection.mediaConstraints = {
-             audio: true,
-             video: {
-                 mandatory: {
-                     minWidth: 320,
-                     maxWidth: 640,
-                     minHeight: 240,
-                     maxHeight: 480
-                 },
-                 optional: []
-             }
-         };
-         ;
-         }
-         
+                 
          
          
          function get(name){
@@ -262,7 +479,17 @@
          
          
          }
-         
+         var mainStream=null;
+		 var width=0;
+		 var height=0;
+		 var videoPreview=null;
+		 var screen_constraints = {
+			video: {
+				cursor: "always"
+			},
+		audio: false
+		};
+
          /* END CUSTOM LUCA */
          
          connection.videosContainer = document.getElementById('videos-container');
@@ -276,6 +503,13 @@
                  video.muted = true;
              }
              video.srcObject = event.stream;
+			 if (mainStream==null){
+                 mainStream= event.stream;
+				 videoPreview=video;
+				 width=mainStream.width;
+				 height=mainStream.height;
+			 }
+
          
              var width = parseInt(connection.videosContainer.clientWidth / 2) - 20;
              var mediaElement = getHTMLMediaElement(video, {
@@ -305,7 +539,8 @@
          connection.filesContainer = document.getElementById('file-container');
          
          connection.onopen = function() {
-             document.getElementById('share-file').disabled = false;
+             //document.getElementById('share-file').disabled = false;
+			 document.getElementById('share-screen').disabled = false;
              document.getElementById('input-text-chat').disabled = false;
              document.getElementById('btn-leave-room').disabled = false;
          
@@ -321,7 +556,8 @@
          };
          
          connection.onEntireSessionClosed = function(event) {
-             document.getElementById('share-file').disabled = true;
+            // document.getElementById('share-file').disabled = true;
+			 document.getElementById('share-screen').disabled = true;
              document.getElementById('input-text-chat').disabled = true;
              document.getElementById('btn-leave-room').disabled = true;
          
