@@ -187,17 +187,16 @@ connection.candidates = {
 };
 
 
-connection.userid=prompt('Your userid:');
 
 
 
 
 connection.iceServers = [{
-   urls: [ "stun:ws-turn1.xirsys.com" ]
+   "urls": [ "stun:ws-turn1.xirsys.com" ]
 }, {
-   username: "wtS_AqU_A7YCRQaI5E75-O6tMI4Z41pv3aeGwtc_QRkIb8hXiOofkGKa6XiEmXkAAAAAAF65E8NsY2F2YWxsbzc5",
-   credential: "9dc49c8a-9365-11ea-b76d-0242ac140004",
-   urls: [
+   "username": "wtS_AqU_A7YCRQaI5E75-O6tMI4Z41pv3aeGwtc_QRkIb8hXiOofkGKa6XiEmXkAAAAAAF65E8NsY2F2YWxsbzc5",
+   "credential": "9dc49c8a-9365-11ea-b76d-0242ac140004",
+   "urls": [
        "turn:ws-turn1.xirsys.com:80?transport=udp",
        "turn:ws-turn1.xirsys.com:3478?transport=udp",
        "turn:ws-turn1.xirsys.com:80?transport=tcp",
