@@ -192,33 +192,22 @@ username = prompt('Server username:');
 credential = prompt('Server credential:');
 
 
-connection.iceServers = [];
 
 
-connection.iceServers.push({
-    urls: 'stun:xirsys.com',
-    credential: credential,
-    username: username
-});
-
-connection.iceServers.push({
-    urls: 'turn:xirsys.com:80?transport=udp',
-    credential: credential,
-    username: username
-});
-
-connection.iceServers.push({
-    urls: 'turn:xirsys.com:80?transport=tcp',
-    credential: credential,
-    username: username
-});
-
-
-connection.iceServers.push({
-    urls: 'turns:xirsys.com:443?transport=tcp',
-    credential: credential,
-    username: username
-});
+connection.iceServers = [{
+   urls: [ "stun:ws-turn1.xirsys.com" ]
+}, {
+   username: "wtS_AqU_A7YCRQaI5E75-O6tMI4Z41pv3aeGwtc_QRkIb8hXiOofkGKa6XiEmXkAAAAAAF65E8NsY2F2YWxsbzc5",
+   credential: "9dc49c8a-9365-11ea-b76d-0242ac140004",
+   urls: [
+       "turn:ws-turn1.xirsys.com:80?transport=udp",
+       "turn:ws-turn1.xirsys.com:3478?transport=udp",
+       "turn:ws-turn1.xirsys.com:80?transport=tcp",
+       "turn:ws-turn1.xirsys.com:3478?transport=tcp",
+       "turns:ws-turn1.xirsys.com:443?transport=tcp",
+       "turns:ws-turn1.xirsys.com:5349?transport=tcp"
+   ]
+}]
 
 
 
