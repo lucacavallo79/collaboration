@@ -167,7 +167,7 @@ connection.iceServers = [{
 var turnEnabled=get('turnEnabled', false);
 var stunEnabled=get('stunEnabled', true);
 var hostEnabled=get('hostEnabled', true);
-var twilioTurn = get('twilioTurn',false);
+var turnServer = get('turnServer',false);
 
 
 
@@ -202,19 +202,19 @@ function get(name){
       return decodeURIComponent(name[1]);
 }
 
-if (turnEnabled || twilioTurn){
+if (turnEnabled || turnServer){
 
 connection.candidates = {
-    turn: turnEnabled || !(twilioTurn === undefined),
+    turn: turnEnabled || !(turnServer === undefined),
     stun: stunEnabled,
     host: hostEnabled
 };
 
 
 
-if (twilioTurn){ //use twilio stun/turn
+if (turnServer){ //use twilio stun/turn
 
-connection.iceServers = JSON.parse(atob(twilioTurn)).ice_servers;
+connection.iceServers = JSON.parse(atob(turnServer)).ice_servers;
 }
 
 else {
