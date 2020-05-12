@@ -292,20 +292,21 @@
 					document.getElementById('share-screen').disabled=true;
 					cameraStream= mainStream.clone();
 
-                    screenStream.fullcanvas = true;
-                    screenStream.width = connection.videosContainer.clientWidth; // or 3840
-                    screenStream.height = connection.videosContainer.clientHeight; // or 2160 
+                    screenStream.fullcanvas = false;
+                    //screenStream.width = connection.videosContainer.clientWidth; // or 3840
+                    screenStream.height = cameraStream.height; // or 2160 
 
-                    cameraStream.width = parseInt((30 / 100) * screenStream.width);
-                    cameraStream.height = parseInt((30 / 100) * screenStream.height);
-                    cameraStream.top = screenStream.height - cameraStream.height;
-                    cameraStream.left = screenStream.width - cameraStream.width;
+                    //cameraStream.width = parseInt((30 / 100) * screenStream.width);
+                    //cameraStream.height = parseInt((30 / 100) * screenStream.height);
+                    //cameraStream.top = screenStream.height - cameraStream.height;
+                    cameraStream.left = screenStream.width;
 
                     mixer = new MultiStreamsMixer([screenStream, cameraStream]);
 
                     mixer.frameInterval = 1;
                     mixer.startDrawingFrames();
 					var mixedStream = mixer.getMixedStream();
+					mainMediaElement.style.width=parseInt(mainMediaElement.style.width)*2 + 'px';
                     videoPreview.srcObject = mixedStream;
 					videoPreview.play();
 					replaceScreenTrack(mixedStream);
@@ -314,6 +315,7 @@
                     addStreamStopListener(screenStream, function() {
                         mixer.releaseStreams();
 						replaceScreenTrack(mainStream);
+						mainMediaElement.style.width=parseInt(mainMediaElement.style.width)/2 + 'px';
 						videoPreview.srcObject= mainStream;
 						videoPreview.play();
 						document.getElementById('share-screen').disabled=false;
@@ -480,6 +482,8 @@
          
          }
          var mainStream=null;
+		 var mainMediaElement=null;
+		 
 		 var width=0;
 		 var height=0;
 		 var videoPreview=null;
@@ -503,12 +507,6 @@
                  video.muted = true;
              }
              video.srcObject = event.stream;
-			 if (mainStream==null){
-                 mainStream= event.stream;
-				 videoPreview=video;
-				 width=mainStream.width;
-				 height=mainStream.height;
-			 }
 
          
              var width = parseInt(connection.videosContainer.clientWidth / 2) - 20;
@@ -518,6 +516,13 @@
                  width: width,
                  showOnMouseEnter: false
              });
+			 
+			 if (mainStream==null){
+                 mainStream= event.stream;
+				 videoPreview=video;
+				 mainMediaElement = mediaElement;
+			 }
+
          
              connection.videosContainer.appendChild(mediaElement);
          
