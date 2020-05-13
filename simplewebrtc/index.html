@@ -183,9 +183,15 @@
         max-width: 800px;
         text-align: center;
       }
+	  
+		.iframe-container{position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: white; z-index:1 }
+        iframe {display: block; width: 100%; height: 100%; border: none;z-index:1}
+
     </style>
   <script type="text/javascript" src="bundle.min.js"></script></head>
   <body>
+
+
     <noscript>
       You need to enable JavaScript to run this app.
     </noscript>
@@ -199,9 +205,10 @@
       </h2>
     </template>
     <template id="empty-roster">
-      <div></div>
+      <div>EMPTY</div>
     </template>
     <template id="homepage">
+	homepage
       <div class="container">
         <form class="create-room-form" method="GET" action="/">
           <span class="create-room-form-input-wrapper"
